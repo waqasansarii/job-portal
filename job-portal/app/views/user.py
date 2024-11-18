@@ -69,19 +69,16 @@ class ProfileView (RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
-    # http_method_names=['PUT']
     def get_object(self):
         user = self.request.user
         try:
             print('user obj',user.id)
-            return Profile.objects.get(user=user)
+            return Profile.objects.get(user=user.id)
         except Profile.DoesNotExist:
             raise NotFound('Profile does not exist for the logged-in user.')
-        # return super().get_object()
+        
     def update(self, request, *args, **kwargs):
         print(request.user)
-        # print(request)
-        # print(self.id)
         try:
             profile = self.get_object()
             print('profile update function',profile)
@@ -90,9 +87,8 @@ class ProfileView (RetrieveUpdateAPIView):
             print('except section is running')
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                
-            # serializer.is_valid(raise_exception=True)
-                serializer.save(user=1)
+                print('request user id',request.user.id)
+                serializer.save(email=request.user.email)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
                 return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)

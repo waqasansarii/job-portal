@@ -1,9 +1,6 @@
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate
 
 from rest_framework import serializers 
-from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..models import User,Profile
 
@@ -16,54 +13,32 @@ class SignupSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
-        
         return super().create(validated_data)    
         
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
-    # first_name = serializers.CharField()
-    # last_name = serializers.CharField()
-    # class Meta:
-    #     model = User
-    #     fields = ['email','password']
-    # def create(self, validated_data):
-    #     print(validated_data,self.context['request'])
-    #     password = validated_data['password']
-    #         # password = make_password(serializer.validated_data['password'])
-    #     user = authenticate(self.context['request'], email= validated_data['email'],password=password)
-    #     print(user,'user')
-    #     if user is not None:
-    #         refresh_token = RefreshToken.for_user(user)
-    #         res_data= {
-    #                 "refresh_token":str(refresh_token),
-    #                 "access_token": str(refresh_token.access_token),
-    #                 "msg":"logged in successfully"
-    #                 }
-    #         return res_data
-    #     else:
-    #         return 'invalid credentials'
-    #             # return Response('Invalid credentials',status.HTTP_400_BAD_REQUEST)
-    #     # return super().create(validated_data)
-        
+       
         
 
 class UserSerializer(serializers.ModelSerializer):
-    # password = serializers.CharField(write_only=True)
-    # first_name = serializers.CharField()
-    # last_name = serializers.CharField()
     class Meta:
         model = User
-        fields = ['id','first_name','last_name','role','email']
+        fields = ['id','role']
         
         
 class ProfileSerializer (serializers.ModelSerializer):
-    email = serializers.EmailField(read_only=True)
-    user_id = serializers.IntegerField(read_only=True)
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     class Meta:
         model =  Profile
-        fields ='__all__'  
-        # exclude = ['user']     
+        fields =['first_name','last_name','email','gender','dob','company_name'
+                 ,'company_size','country','city','logo','user','created_at']
+    
+    # Customize the output to include the `user` field
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data  # Add `user` data in output only
+        return representation   
         
         
