@@ -10,11 +10,9 @@ from ..models import User,Profile
 
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    first_name = serializers.CharField()
-    last_name = serializers.CharField()
     class Meta:
         model = User
-        fields = ['first_name','last_name','role','email','password']
+        fields = ['email','role','password']
     
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
@@ -61,6 +59,7 @@ class UserSerializer(serializers.ModelSerializer):
         
         
 class ProfileSerializer (serializers.ModelSerializer):
+    email = serializers.EmailField(read_only=True)
     class Meta:
         model =  Profile
         fields ='__all__'       

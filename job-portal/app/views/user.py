@@ -2,11 +2,13 @@ from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView
+from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView,RetrieveUpdateAPIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.exceptions import NotFound
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 
@@ -54,20 +56,35 @@ class LoginView(APIView):
         else:
             return Response(serializer.errors,status.HTTP_400_BAD_REQUEST) 
         
-class UserView(APIView):
-    def get(self,req:Request):
-        user = req.user
-        data = UserSerializer(user)
-        return Response(data.data,status.HTTP_200_OK)
+# class UserView(APIView):
+#     def get(self,req:Request):
+#         user = req.user
+#         data = UserSerializer(user)
+#         return Response(data.data,status.HTTP_200_OK)
                    
 
-class ProfileView (UpdateAPIView):
+class ProfileView (RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
     # http_method_names=['PUT']
+    def get_object(self):
+        user = self.request.user
+        try:
+            return Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            raise NotFound('Profile does not exist for the logged-in user.')
+        # return super().get_object()
     def update(self, request, *args, **kwargs):
-        print(request.data)
+        print(request.user)
         # print(request)
         # print(self.id)
-        return super().update(request, *args, **kwargs)
+        try:
+            profile = self.get_object()
+            return super().update(request, *args, **kwargs)
+        except NotFound:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save(user=request.user,email=request.user.email)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
                     
