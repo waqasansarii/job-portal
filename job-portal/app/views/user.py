@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate,login
 
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView,RetrieveUpdateAPIView
@@ -45,12 +45,14 @@ class LoginView(APIView):
             user = authenticate(request, email= serializer.validated_data['email'],password=password)
             print(user,'user')
             if user is not None:
-                refresh_token = RefreshToken.for_user(user)
-                return Response({
-                    "refresh_token":str(refresh_token),
-                    "access_token": str(refresh_token.access_token),
-                    "msg":"logged in successfully"
-                    },status.HTTP_200_OK)
+                login(request,user)
+                # refresh_token = RefreshToken.for_user(user)
+                return Response('login success',status.HTTP_200_OK)
+                # return Response({
+                #     "refresh_token":str(refresh_token),
+                #     "access_token": str(refresh_token.access_token),
+                #     "msg":"logged in successfully"
+                #     },status.HTTP_200_OK)
             else:
                 return Response('Invalid credentials',status.HTTP_400_BAD_REQUEST)
         else:
@@ -71,6 +73,7 @@ class ProfileView (RetrieveUpdateAPIView):
     def get_object(self):
         user = self.request.user
         try:
+            print('user obj',user.id)
             return Profile.objects.get(user=user)
         except Profile.DoesNotExist:
             raise NotFound('Profile does not exist for the logged-in user.')
@@ -81,10 +84,16 @@ class ProfileView (RetrieveUpdateAPIView):
         # print(self.id)
         try:
             profile = self.get_object()
+            print('profile update function',profile)
             return super().update(request, *args, **kwargs)
         except NotFound:
+            print('except section is running')
             serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save(user=request.user,email=request.user.email)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            if serializer.is_valid():
+                
+            # serializer.is_valid(raise_exception=True)
+                serializer.save(user=1)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
                     

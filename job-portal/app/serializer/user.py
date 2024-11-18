@@ -60,8 +60,10 @@ class UserSerializer(serializers.ModelSerializer):
         
 class ProfileSerializer (serializers.ModelSerializer):
     email = serializers.EmailField(read_only=True)
+    user_id = serializers.IntegerField(read_only=True)
     class Meta:
         model =  Profile
-        fields ='__all__'       
+        fields ='__all__'  
+        # exclude = ['user']     
         
         
