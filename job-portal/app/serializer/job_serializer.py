@@ -7,9 +7,14 @@ class JobSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     class Meta:
         model = Jobs
-        fields =['title','description','status','skills','job_type','salary_range','user','created_at']
+        fields =['id','title','description','status','skills','job_type','salary_range','user','created_at']
         
     def to_representation(self, instance):
         representation = super().to_representation(instance) 
         representation['user'] =  UserSerializer(instance.user).data
         return representation  
+
+class JobStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model =Jobs
+        fields = ['status']    

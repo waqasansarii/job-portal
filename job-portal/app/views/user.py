@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate,login
+from django.contrib.auth import authenticate,login,logout
 
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView,RetrieveUpdateAPIView
@@ -15,7 +15,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from ..serializer.user import SignupSerializer,LoginSerializer,UserSerializer,ProfileSerializer
 from ..models import User,Profile
-from ..permissions import IsEmployeer
+from ..permissions import IsEmployeerOrReadOnly
 
 
 # class SignupView(APIView):
@@ -59,17 +59,24 @@ class LoginView(APIView):
         else:
             return Response(serializer.errors,status.HTTP_400_BAD_REQUEST) 
         
-# class UserView(APIView):
-#     def get(self,req:Request):
-#         user = req.user
-#         data = UserSerializer(user)
-#         return Response(data.data,status.HTTP_200_OK)
-                   
+class LogoutView(APIView):
+    def post(self,req:Request):
+        # user = req.user
+        # data = UserSerializer(user)
+        logout(req)
+        return Response('logout success',status.HTTP_200_OK)
+
+class UserView(APIView):
+    def get(self,req:Request):
+        user = req.user
+        data = UserSerializer(user)    
+        return Response(data.data,status.HTTP_200_OK)
+             
 
 class ProfileView (RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated,IsEmployeer]
+    permission_classes = [IsAuthenticated,IsEmployeerOrReadOnly]
     def get_object(self):
         user = self.request.user
         try:
