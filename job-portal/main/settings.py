@@ -137,14 +137,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'app.User'
 
-# REST_FRAMEWORK={
+REST_FRAMEWORK={
 #      "DEFAULT_AUTHENTICATION_CLASSES": (
 #         "rest_framework_simplejwt.authentication.JWTAuthentication",
 #     ),
 #     #  'DEFAULT_PERMISSION_CLASSES': (
 #     #     'rest_framework.permissions.IsAuthenticated',
 #     # ),
-# }
+ 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20  # Adjust this number as per your requirement
+}
 
 
 # SIMPLE_JWT = {
