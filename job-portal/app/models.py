@@ -41,6 +41,30 @@ class Profile(models.Model):
         return self.first_name + ' ' + self.last_name
     
 
+class Jobs(models.Model):
+    Job_status=[
+        ('Open','Open'),
+        ('Closed','Closed'),
+        ('On Hold','On Hold'),
+        ('Filled','Filled')
+    ]
+    Job_type=[
+        ('Full Time','Full Time'),
+        ('Part time','Part time'),
+        ('Contract','Contract')
+    ]
+        
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    status = models.CharField(choices=Job_status,max_length=200)
+    skills = models.TextField()
+    salary_range = models.CharField(max_length=250)
+    job_type = models.CharField(max_length=200,choices=Job_type)
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='job_user')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return f"{self.id} - {self.title}"
 # class Task(models.Model):
     
 #     Priority_choice = [

@@ -15,6 +15,7 @@ from drf_yasg.utils import swagger_auto_schema
 
 from ..serializer.user import SignupSerializer,LoginSerializer,UserSerializer,ProfileSerializer
 from ..models import User,Profile
+from ..permissions import IsEmployeer
 
 
 # class SignupView(APIView):
@@ -68,7 +69,7 @@ class LoginView(APIView):
 class ProfileView (RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated,IsEmployeer]
     def get_object(self):
         user = self.request.user
         try:
