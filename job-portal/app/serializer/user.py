@@ -23,6 +23,7 @@ class LoginSerializer(serializers.Serializer):
         
 
 class UserSerializer(serializers.ModelSerializer):
+    # profile = serializers.PrimaryKeyRelatedField(queryset = Profile.objects.all(),source ='profile_user')
     class Meta:
         model = User
         fields = ['id','role']
@@ -40,5 +41,10 @@ class ProfileSerializer (serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # Add `user` data in output only
         return representation   
-        
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True,source='profile_user',many=True)
+    class Meta:
+        model = User
+        fields=['profile']        
         

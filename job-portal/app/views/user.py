@@ -13,7 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 
 
-from ..serializer.user import SignupSerializer,LoginSerializer,UserSerializer,ProfileSerializer
+from ..serializer.user import SignupSerializer,LoginSerializer,UserSerializer,ProfileSerializer,UserProfileSerializer
 from ..models import User,Profile
 from ..permissions import IsEmployeerOrReadOnly
 
@@ -69,19 +69,19 @@ class LogoutView(APIView):
 class UserView(APIView):
     def get(self,req:Request):
         user = req.user
-        data = UserSerializer(user)    
+        data = UserProfileSerializer(user)    
         return Response(data.data,status.HTTP_200_OK)
              
 
 class ProfileView (RetrieveUpdateAPIView):
-    queryset = Profile.objects.all()
+    queryset = Profile.objects.select_related('user').all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated,IsEmployeerOrReadOnly]
     def get_object(self):
         user = self.request.user
         try:
             print('user obj',user.id)
-            return Profile.objects.get(user=user.id)
+            return Profile.objects.select_related('user').get(user=user.id)
         except Profile.DoesNotExist:
             raise NotFound('Profile does not exist for the logged-in user.')
         
