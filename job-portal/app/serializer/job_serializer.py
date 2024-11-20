@@ -19,7 +19,7 @@ class JobSerializer(serializers.ModelSerializer):
             
     def to_representation(self, instance):
         representation = super().to_representation(instance) 
-        # representation['user'] =  UserProfileSerializer(instance.user).data
+        # representation['user'] =  UserSerializer(instance.user).data
         # representation['profile'] = ProfileSerializer(representation['user'].id).data
         
         # hide salary range field if user is not logged in 

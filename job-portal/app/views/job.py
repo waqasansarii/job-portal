@@ -5,10 +5,12 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
 
 from ..permissions import IsEmployeerOrReadOnly,IsOwner
 from ..serializer.job_serializer import JobSerializer,JobStatusSerializer
 from ..models import Jobs
+from ..filters import JobFilters
 
 
 class JobView(ModelViewSet,PageNumberPagination):
@@ -18,6 +20,10 @@ class JobView(ModelViewSet,PageNumberPagination):
     page_size = 20  # Number of items per page
     page_size_query_param = 'page_size'  # Allow clients to set the page size
     max_page_size = 100  # Maximum page size allowed
+    filter_backends=[DjangoFilterBackend]
+    filterset_class= JobFilters
+    
+    
 
     @action(
         detail=False,
