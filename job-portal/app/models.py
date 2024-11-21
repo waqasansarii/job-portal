@@ -105,8 +105,13 @@ class Applications(models.Model):
     )
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='application_user')
     job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name='application_job')
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        unique_together = ('user', 'job')
+        
+    def __str__(self):
+        return self.id 
         
 # class Task(models.Model):
     
