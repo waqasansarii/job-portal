@@ -79,7 +79,20 @@ class JobView(ModelViewSet,PageNumberPagination):
             else :
                 return Response({'error':application.errors},status.HTTP_400_BAD_REQUEST)
         except Jobs.DoesNotExist:
-            return Response({'error':'invalid job id'},status.HTTP_400_BAD_REQUEST)    
+            return Response({'error':'invalid job id'},status.HTTP_400_BAD_REQUEST)  
+        
+        
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='my-applications',
+        permission_classes=[IsAuthenticated],
+        serializer_class = ApplicationSerializer
+        )  
+    def my_applications(self,req:Request):
+        applications = Applications.objects.select_related('user__profile_user','job').filter(user=req.user.id).all()
+        serializer = self.get_serializer(applications,many=True)
+        return Response(serializer.data,status.HTTP_200_OK)
         
     
     

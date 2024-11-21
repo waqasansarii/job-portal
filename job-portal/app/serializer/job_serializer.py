@@ -34,9 +34,29 @@ class JobStatusSerializer(serializers.ModelSerializer):
         fields = ['status']    
         
 
+class JobApplicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Jobs
+        fields =['id','title','description','status','skills','job_type','salary_range','user','created_at']
+        
+
 class ApplicationSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    applicant = serializers.SerializerMethodField()
     class Meta:
         model = Applications
-        fields=['user','created_at','job','status']        
+        fields=['user','created_at','job','status','applicant']        
         read_only_fields = ['job', 'status','user']
+    
+    def get_applicant(self,obj):
+        profile = getattr(obj.user,'profile_user',None)
+        if profile:
+            return ProfileSerializer(profile).data
+        return None    
+        
+    def to_representation(self, instance):
+        reperesetation= super().to_representation(instance)   
+        reperesetation['job'] = JobApplicationSerializer(instance.job).data
+        return reperesetation 
+        
+        
