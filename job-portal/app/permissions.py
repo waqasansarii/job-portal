@@ -16,6 +16,13 @@ class IsEmployeerOrReadOnly(BasePermission):
         
             # allowing to call get method to everyone 
         return request.method in SAFE_METHODS
+
+class IsJobSeeker(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.role == 0:
+            return True
+        return False
+        # return super().has_permission(request, view)    
     
 
 class IsOwner(BasePermission):

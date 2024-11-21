@@ -12,7 +12,10 @@ class JobSerializer(serializers.ModelSerializer):
         fields =['id','title','description','status','skills','job_type','salary_range','user','profile','created_at']
         
     def get_profile(self,obj):
-        profile = obj.user.profile_user.first()
+        # print('obj user',obj.user)
+        profile = getattr(obj.user,'profile_user',None)
+        # profile = obj.user.profile_user
+        # print(profile)
         if profile:
             return ProfileSerializer(profile).data
         return None
@@ -20,7 +23,6 @@ class JobSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance) 
         # representation['user'] =  UserSerializer(instance.user).data
-        # representation['profile'] = ProfileSerializer(representation['user'].id).data
         
         # hide salary range field if user is not logged in 
         if self.context['request'].user.is_authenticated == False:

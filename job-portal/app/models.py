@@ -33,12 +33,35 @@ class Profile(models.Model):
     country = models.CharField(max_length=200)
     city = models.CharField(max_length=200)
     logo = models.FileField(upload_to="profiles/", null=True, blank=True)
-    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='profile_user')
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='profile_user')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
         return self.first_name + ' ' + self.last_name
+    
+
+class ProfileJobSeeker(models.Model):
+    first_name = models.CharField(max_length=50)
+    last_name = models.TextField(null=True,blank=True)
+    email = models.EmailField(null=True,blank=True)
+    GENDER = [
+        ('M','Male'),
+        ('F','Female')
+    ]
+    gender = models.CharField(choices=GENDER,default=0,max_length=50)
+    dob = models.DateField(null=True,blank=True)
+    qualification = models.TextField(null=True,blank=True)
+    cv = models.FileField(upload_to="profiles/", null=True, blank=True)
+    country = models.CharField(max_length=200)
+    city = models.CharField(max_length=200)
+    profile_image = models.FileField(upload_to="profiles/", null=True, blank=True)
+    user = models.OneToOneField(User,on_delete=models.CASCADE,related_name='profile_job_user')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        return self.first_name + ' ' + self.last_name 
+    
     
 
 class Jobs(models.Model):
@@ -65,6 +88,26 @@ class Jobs(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
         return f"{self.id} - {self.title}"
+    
+    
+class Applications(models.Model):
+    STATUS=[
+        ('Applied','Applied'),
+        ('Approved','Approved'),
+        ('Rejected','Rejected'),
+        ('Hired','Hired')
+    ]
+
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS,
+        default=STATUS[0],
+    )
+    user = models.ForeignKey(User,on_delete=models.CASCADE,related_name='application_user')
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name='application_job')
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
+        
 # class Task(models.Model):
     
 #     Priority_choice = [

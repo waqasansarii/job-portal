@@ -14,7 +14,7 @@ from ..filters import JobFilters
 
 
 class JobView(ModelViewSet,PageNumberPagination):
-    queryset = Jobs.objects.select_related('user').all()
+    queryset = Jobs.objects.select_related('user__profile_user').all()
     serializer_class = JobSerializer
     permission_classes = [IsOwner,IsEmployeerOrReadOnly]
     page_size = 20  # Number of items per page

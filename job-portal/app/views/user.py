@@ -13,9 +13,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
 
 
-from ..serializer.user import SignupSerializer,LoginSerializer,UserSerializer,ProfileSerializer,UserProfileSerializer
-from ..models import User,Profile
-from ..permissions import IsEmployeerOrReadOnly
+from ..serializer.user import SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,ProfileSerializer,UserProfileSerializer,UserSerializer
+from ..models import User,Profile,ProfileJobSeeker
+from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
 
 
 # class SignupView(APIView):
@@ -69,7 +69,7 @@ class LogoutView(APIView):
 class UserView(APIView):
     def get(self,req:Request):
         user = req.user
-        data = UserProfileSerializer(user)    
+        data = UserSerializer(user)    
         return Response(data.data,status.HTTP_200_OK)
              
 
@@ -101,3 +101,32 @@ class ProfileView (RetrieveUpdateAPIView):
             else:
                 return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
                     
+
+class JobSeekerProfileView(RetrieveUpdateAPIView):
+    queryset = ProfileJobSeeker.objects.all()
+    serializer_class = ProfileJobSeekerSerializer  
+    permission_classes = [IsAuthenticated,IsJobSeeker]
+    
+    def get_object(self):
+        try :
+           profile = ProfileJobSeeker.objects.select_related('user').get(user=self.request.user.id)
+           data = ProfileJobSeekerSerializer(profile)
+        #    return Response(data.data,status.HTTP_200_OK)
+           return profile
+        except ProfileJobSeeker.DoesNotExist:
+            raise NotFound('Profile does not exists')   
+    
+    def update(self, request, *args, **kwargs):
+        try:
+            profile = self.get_object()
+            return super().update(request, *args, **kwargs)
+        except NotFound:
+            serializer = self.get_serializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(email=request.user.email)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
+                    
+        
+                      
