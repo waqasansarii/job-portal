@@ -41,12 +41,12 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         
 
 class ApplicationSerializer(serializers.ModelSerializer):
-    # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     applicant = serializers.SerializerMethodField()
     class Meta:
         model = Applications
         fields=['user','created_at','job','status','applicant']        
-        read_only_fields = ['job', 'status','user']
+        read_only_fields = ['job', 'status']
     
     def get_applicant(self,obj):
         profile = getattr(obj.user,'profile_user',None)
