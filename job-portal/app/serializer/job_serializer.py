@@ -45,7 +45,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     applicant = serializers.SerializerMethodField()
     class Meta:
         model = Applications
-        fields=['user','created_at','job','status','applicant']        
+        fields=['id','user','created_at','job','status','applicant']        
         read_only_fields = ['job', 'status']
     
     def get_applicant(self,obj):
@@ -59,4 +59,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         reperesetation['job'] = JobApplicationSerializer(instance.job).data
         return reperesetation 
         
-        
+
+class ApplicationStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Applications
+        fields=['status']        

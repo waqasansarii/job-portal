@@ -35,7 +35,7 @@ class ProfileSerializer (serializers.ModelSerializer):
         model =  Profile
         fields =['first_name','last_name','email','gender','dob','company_name'
                  ,'company_size','country','city','logo','user','created_at']
-        depth = 1
+        # depth = 1
     
     # Customize the output to include the `user` field
     def to_representation(self, instance):
@@ -49,7 +49,7 @@ class ProfileJobSeekerSerializer (serializers.ModelSerializer):
         model =  ProfileJobSeeker
         fields =['first_name','last_name','gender','dob','qualification'
                  ,'cv','country','city','profile_image','user','created_at']
-        depth = 1
+        # depth = 1
     
     # Customize the output to include the `user` field
     def to_representation(self, instance):

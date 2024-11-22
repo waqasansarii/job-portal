@@ -9,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 
 from ..permissions import IsEmployeerOrReadOnly,IsOwner,IsJobSeeker
-from ..serializer.job_serializer import JobSerializer,JobStatusSerializer,ApplicationSerializer
+from ..serializer.job_serializer import JobSerializer,JobStatusSerializer,ApplicationSerializer,ApplicationStatusSerializer
 from ..models import Jobs,Applications
 from ..filters import JobFilters
 
@@ -23,10 +23,6 @@ class JobView(ModelViewSet,PageNumberPagination):
     max_page_size = 100  # Maximum page size allowed
     filter_backends=[DjangoFilterBackend]
     filterset_class= JobFilters
-    
-    # def get_object(self):
-        
-    #     return super().get_object()
     
 
     @action(
@@ -53,10 +49,19 @@ class JobView(ModelViewSet,PageNumberPagination):
         obj = self.get_object()
         # calling IsOwner permission 
         self.check_object_permissions(req,obj)
-        obj.status = req.data.get('status')
-        obj.save()
-        job = JobSerializer(obj)
-        return Response(job.data,status.HTTP_201_CREATED)
+        try:
+            job = self.queryset.filter(id=pk,user=req.user).first()
+            if not job:
+                return Response({'error':'Job does not exists'},status.HTTP_200_OK)
+            serializer = self.get_serializer(job,data=req.data)
+            if serializer.is_valid():
+                serializer.save(user=req.user)
+                return Response(serializer.data,status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error':str(e)},status.HTTP_400_BAD_REQUEST)    
+
     
     @action(
         detail=True,
@@ -83,23 +88,6 @@ class JobView(ModelViewSet,PageNumberPagination):
         except Jobs.DoesNotExist:
             return Response({'error':'invalid job id'},status.HTTP_400_BAD_REQUEST)  
         
-    def filter_queryset(self, queryset):
-        # return super().filter_queryset(queryset):
-        """
-        Apply filters only when not in the `my_applications` action.
-        """
-        # queryset = super().get_queryset()
-        if self.action != 'my_applications':
-            queryset = self.filter_queryset(queryset)  # Apply global filters
-        return queryset
-    
-    def get_filterset_class(self):
-        """
-        Dynamically assign filter set class based on action.
-        """
-        if self.action == 'my_applications':
-            return {}  # Custom filter for `my_jobs`
-        return None 
 
     @action(
         detail=False,
@@ -107,37 +95,69 @@ class JobView(ModelViewSet,PageNumberPagination):
         url_path='my-applications',
         permission_classes=[IsAuthenticated],
         serializer_class=ApplicationSerializer,
-        
-    )
-    @swagger_auto_schema(
-        operation_description="Get a list of applications for the authenticated user",
-        manual_parameters=[],  # This will hide the query filters from Swagger documentation
-        # field_inspectors=None,
-        filter_inspectors=None,
-        # paginator_inspectors=None
+        filterset_class=None
+        # page_size=None
     )
     def my_applications(self, request):
-        
-                # Temporarily bypass the filter backends in this specific action
-        # original_filter_backends = self.filter_backends
-        self.filter_backends = None  # Remove filters temporarily
-        # self.filterset_class=None
-        # filterset = self.get_filterset_class(None)
         try:
-            # Custom queryset to bypass any global filtering
             queryset = Applications.objects.select_related('user__profile_user', 'job').filter(user=request.user).all()
-            # filtered = self.filter_queryset(queryset)
-            
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)  
-        
-        # finally:
-        #      self.filter_backends = original_filter_backends      
-    
-    
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST) 
         
         
-    
-    
+    @action(
+        detail=True,
+        methods=['GET'],
+        url_path='applicants',
+        permission_classes=[IsAuthenticated],
+        serializer_class=ApplicationSerializer,
+        filterset_class=None
+        # page_size=None
+    )
+    def applicants(self,request,pk):
+        try:
+            queryset = Applications.objects.select_related(
+                'user__profile_user', 'job'
+                ).filter(
+                    job=pk,job__user=request.user
+                ).all()
+                
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)   
+  
+  
+    @action(
+        detail=True,
+        methods=['PUT'],
+        url_path='applicants/(?P<applicant_id>[^/.]+)/status',
+        permission_classes=[IsAuthenticated,IsEmployeerOrReadOnly],
+        serializer_class=ApplicationStatusSerializer,
+        filterset_class=None
+        # page_size=None
+    )
+    def update_status(self,request:Request,pk,applicant_id):
+        try:
+            application = Applications.objects.select_related(
+                'user__profile_user', 'job'
+                ).filter(
+                    job=pk,job__user=request.user,id=applicant_id
+                ).first()
+            if not application:
+                return Response({'error': 'Application does not exists'}, status=status.HTTP_400_BAD_REQUEST)   
+                
+            # print(application)    
+            serializer = self.get_serializer(application,data=request.data)
+            if serializer.is_valid():
+                try:
+                    serializer.save()
+                    return Response(serializer.data,status.HTTP_201_CREATED)
+                except Exception as e:
+                    return Response(str(e),status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response(application.errors,status.HTTP_400_BAD_REQUEST)   
+        except application.DoesNotExist:
+            return Response({'error': 'Application does not exists'}, status=status.HTTP_400_BAD_REQUEST)   
