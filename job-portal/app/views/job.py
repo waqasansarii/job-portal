@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action,permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -7,10 +9,16 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
+# from requests import request
+import requests
+
 
 from ..permissions import IsEmployeerOrReadOnly,IsOwner,IsJobSeeker
-from ..serializer.job_serializer import JobSerializer,JobStatusSerializer,ApplicationSerializer,ApplicationStatusSerializer
-from ..models import Jobs,Applications
+from ..serializer.job_serializer import JobSerializer,JobStatusSerializer
+from ..serializer.application_serializer import (
+ApplicationSerializer,ApplicationStatusSerializer,NotificationSerializer
+)
+from ..models import Jobs,Applications,Notifications
 from ..filters import JobFilters
 
 
@@ -33,10 +41,24 @@ class JobView(ModelViewSet,PageNumberPagination):
         permission_classes=[IsAuthenticated]
         )
     def my_jobs(self,request:Request):
-        print('running')
+        
+        headers = {'x-api-key': 'CAAUXWY2gxx3sHYGMhPhJjt8jEaEH0Z5', 'Content-Type': 'application/json',           # Specify JSON content type
+        'Accept': 'application/json'}
+        response = requests.get('https://api.stb.gov.sg/content/attractions/v2/search?searchType=keyword&searchValues=singapore', headers=headers)
+        if response.status_code!=200:
+            print(response.text,response.status_code)
+        
+        try:
+            data = response.json()
+            print(data)
+        except ValueError:
+            print("Error: Unable to parse JSON - response content:", response.text)
+            return Response({'error': 'Failed to parse JSON from API response'}, status=500)    
+            
+        # print('running',response.json())
         query = self.queryset.filter(user= request.user.id).all()
         serializer = self.get_serializer(query,many=True)
-        return Response(serializer.data,status.HTTP_200_OK)
+        return Response({'our':serializer.data,'api':data},status.HTTP_200_OK)
     
     
     @action(
@@ -73,13 +95,29 @@ class JobView(ModelViewSet,PageNumberPagination):
     def apply(self,req:Request,pk):
         try: 
             jobs = Jobs.objects.select_related('user__profile_user').get(id=pk)
-        
+            # print('jobssssssssssss',jobs.user)
+            # notify_obj = {
+            #             'content':f'''{req.user} is applied on {jobs.title}''',
+            #             'sender': req.user,
+            #             'reciever': jobs.user,
+            #             'job' : jobs
+            #         }
+            # print(**notify_obj)
             if Applications.objects.filter(user=req.user.id,job=jobs).exists():
-                return Response({'error':'You have already applied on it'},status.HTTP_200_OK)
+                return Response({'data':'You have already applied on it'},status.HTTP_200_OK)
             application = self.get_serializer(data=req.data)
             if application.is_valid():
                 try:
-                    application.save(status='Applied',job=jobs,user=req.user)
+                    with transaction.atomic():
+                        notify_obj = {
+                        'content':f'''{req.user} is applied on {jobs.title}''',
+                        'sender': req.user if req.user.role==0 else jobs.user,
+                        'reciever': jobs.user if req.user.role==1 else req.user,
+                        'job' : jobs
+                        }
+                    # print(notify)
+                        application.save(status='Applied',job=jobs,user=req.user)
+                        Notifications.objects.create(**notify_obj)
                     return Response(application.data,status.HTTP_201_CREATED)
                 except Exception as e:
                     return Response(str(e),status.HTTP_400_BAD_REQUEST)
@@ -161,3 +199,24 @@ class JobView(ModelViewSet,PageNumberPagination):
                 return Response(application.errors,status.HTTP_400_BAD_REQUEST)   
         except application.DoesNotExist:
             return Response({'error': 'Application does not exists'}, status=status.HTTP_400_BAD_REQUEST)   
+        
+    @action(
+        detail=False,
+        methods=['GET'],
+        url_path='notifications',
+        url_name='Notifications',
+        serializer_class = NotificationSerializer,
+        permission_classes=[IsAuthenticated],
+        
+        filterset_class=None
+    )
+    def Notifications(self,req:Request):
+        try:
+            notifications = Notifications.objects.select_related(
+            'job','sender__profile_user','reciever__profile_user'
+            ).filter(reciever=req.user).all()
+            notifications = self.get_serializer(notifications,many=True)
+            return Response(notifications.data,status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'data':str(e)})    
+        

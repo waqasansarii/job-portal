@@ -87,7 +87,7 @@ class Jobs(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     def __str__(self):
-        return f"{self.id} - {self.title}"
+        return f"{self.title}"
     
     
 class Applications(models.Model):
@@ -112,6 +112,15 @@ class Applications(models.Model):
         
     def __str__(self):
         return self.id 
+    
+class Notifications(models.Model):
+    content = models.TextField()
+    job = models.ForeignKey(Jobs,on_delete=models.CASCADE,related_name='notify_job')
+    sender = models.ForeignKey(User,on_delete=models.CASCADE,related_name='notify_sender')
+    reciever = models.ForeignKey(User,on_delete=models.CASCADE,related_name='notify_reciever')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+        
         
 # class Task(models.Model):
     
