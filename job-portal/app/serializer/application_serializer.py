@@ -47,7 +47,10 @@ class NotificationSerializer(serializers.ModelSerializer):
         
     def to_representation(self, instance):
         representation= super().to_representation(instance)
+        print(self.context['request'].user.role)
         representation['job'] = JobApplicationSerializer(instance.job).data
+        if self.context['request'].user.role !=1:
+            representation.pop('applicant')
         # representation['user'] = ProfileSerializer(instance.sender).data
         representation.pop('reciever')
         representation.pop('sender')

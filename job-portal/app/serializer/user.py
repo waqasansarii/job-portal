@@ -1,18 +1,37 @@
 from django.contrib.auth.hashers import make_password
+from django.core.mail import send_mail,BadHeaderError
+from django.conf import settings
 
 from rest_framework import serializers 
+from rest_framework.response import Response
 
 from ..models import User,Profile,ProfileJobSeeker
+from ..utils import generate_otp,verify_otp
 
 
 class SignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    # email_otp = serializers.CharField()
+    is_verified = serializers.BooleanField(read_only=True)
     class Meta:
         model = User
-        fields = ['email','role','password']
+        fields = ['email','role','password','is_verified']
     
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
+        email_otp = generate_otp()
+        validated_data['email_otp'] = email_otp
+        try :
+            send_mail(
+            'Account verification code',
+            f'Your OTP for email verification is: {email_otp}',
+            settings.EMAIL_HOST_USER,
+            [validated_data['email']],
+            fail_silently=False,
+            )
+        except BadHeaderError:
+            return Response("Invalid header found.")    
+        
         return super().create(validated_data)    
         
 

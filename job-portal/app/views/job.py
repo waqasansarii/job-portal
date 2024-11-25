@@ -95,14 +95,7 @@ class JobView(ModelViewSet,PageNumberPagination):
     def apply(self,req:Request,pk):
         try: 
             jobs = Jobs.objects.select_related('user__profile_user').get(id=pk)
-            # print('jobssssssssssss',jobs.user)
-            # notify_obj = {
-            #             'content':f'''{req.user} is applied on {jobs.title}''',
-            #             'sender': req.user,
-            #             'reciever': jobs.user,
-            #             'job' : jobs
-            #         }
-            # print(**notify_obj)
+           
             if Applications.objects.filter(user=req.user.id,job=jobs).exists():
                 return Response({'data':'You have already applied on it'},status.HTTP_200_OK)
             application = self.get_serializer(data=req.data)
@@ -191,7 +184,18 @@ class JobView(ModelViewSet,PageNumberPagination):
             serializer = self.get_serializer(application,data=request.data)
             if serializer.is_valid():
                 try:
-                    serializer.save()
+                    with transaction.atomic():
+                        print(request.data)
+                        notify_obj = {
+                        'content':f'''{request.user} you are {request.data['status']}''',
+                        'sender': request.user,
+                        'reciever': application.user,
+                        'job' : application.job
+                        }
+                    # print(notify)
+                        # application.save(status='Applied',job=jobs,user=req.user)
+                        serializer.save()
+                        Notifications.objects.create(**notify_obj)
                     return Response(serializer.data,status.HTTP_201_CREATED)
                 except Exception as e:
                     return Response(str(e),status.HTTP_400_BAD_REQUEST)

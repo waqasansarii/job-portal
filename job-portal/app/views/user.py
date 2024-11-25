@@ -1,5 +1,7 @@
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate,login,logout
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
 
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView,RetrieveUpdateAPIView
@@ -11,11 +13,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
-
+from django.core.mail import send_mail
+from django.conf import settings
 
 from ..serializer.user import SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,ProfileSerializer,UserProfileSerializer,UserSerializer
 from ..models import User,Profile,ProfileJobSeeker
 from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
+from ..utils import generate_otp,verify_otp
 
 
 # class SignupView(APIView):
@@ -33,6 +37,20 @@ from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
 class SignupView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
+    
+    # def perform_create(self, serializer):
+    #     # current_site = get_current_site(self.request).domain
+    #     # reverse_link = reverse('verify-email')
+    #     # absurl = 
+    #     email_otp = generate_otp()
+    #     serializer.email_otp = email_otp
+    #     # mobile_otp = generate_otp()
+    #     # user.email_otp = email_otp
+    #     # user.mobile_otp = mobile_otp
+    #     serializer.save()
+
+    #     return  serializer
+    
     
 class LoginView(APIView):
     
@@ -67,6 +85,7 @@ class LogoutView(APIView):
         return Response('logout success',status.HTTP_200_OK)
 
 class UserView(APIView):
+    permission_classes=[IsAuthenticated]
     def get(self,req:Request):
         user = req.user
         data = UserSerializer(user)    

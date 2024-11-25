@@ -7,6 +7,9 @@ class User(AbstractUser):
     first_name=None
     last_name = None
     email = models.EmailField(unique=True)
+    is_verified = models.BooleanField(default=False)
+    email_otp = models.CharField(max_length=6, null=True, blank=True)
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     ROLES_CHOICE = [
