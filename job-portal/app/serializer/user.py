@@ -54,7 +54,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         
 
 class UserSerializer(serializers.ModelSerializer):
-    # profile = serializers.PrimaryKeyRelatedField(queryset = Profile.objects.all(),source ='profile_user')
     class Meta:
         model = User
         fields = ['id','role','email','is_verified']
@@ -67,12 +66,10 @@ class ProfileSerializer (serializers.ModelSerializer):
         model =  Profile
         fields =['first_name','last_name','email','gender','dob','company_name'
                  ,'company_size','country','city','logo','user','created_at']
-        # depth = 1
     
-    # Customize the output to include the `user` field
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data  # Add `user` data in output only
+        representation['user'] = UserSerializer(instance.user).data  
         return representation   
 
 
@@ -82,13 +79,11 @@ class ProfileJobSeekerSerializer (serializers.ModelSerializer):
         model =  ProfileJobSeeker
         fields =['first_name','last_name','gender','dob','qualification'
                  ,'cv','country','city','profile_image','user','created_at']
-        # depth = 1
     
-    # Customize the output to include the `user` field
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data  # Add `user` data in output only
-        # representation['email'] = instance.user.email  # Add `user` data in output only
+        representation['user'] = UserSerializer(instance.user).data  
         return representation   
 
 

@@ -4,7 +4,7 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView,RetrieveUpdateAPIView
-from rest_framework.viewsets import ModelViewSet
+# from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.exceptions import NotFound
@@ -142,8 +142,6 @@ class ForgotPasswordView(APIView):
             email = serializer.validated_data['email']
             try:
                 user = User.objects.get(email=email)
-                # check = check_password('1234567','pbkdf2_sha256$870000$be1D6ttubgvrkswzlViVoh$2QBiQV9RNdo9oEWDeTPeJBVQ3nhaCxckDYfYSbaiK3k=')
-                # print(user.password,check)
                 token_generator = PasswordResetTokenGenerator()
                 token = token_generator.make_token(user)
                 reset = PasswordReset.objects.create(email=email,token=token)

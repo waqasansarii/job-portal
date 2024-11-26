@@ -21,5 +21,4 @@ urlpatterns = [
     path('users',UserView.as_view()),
     path('employer/profile',ProfileView.as_view()),
     path('job-seeker/profile',JobSeekerProfileView.as_view())
-    # path('jobs',JobView.as_view())
 ] + router.urls
