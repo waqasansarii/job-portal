@@ -10,7 +10,7 @@ from ..utils import generate_otp,verify_otp
 
 
 class SignupSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True,min_length=6)
     # email_otp = serializers.CharField()
     is_verified = serializers.BooleanField(read_only=True)
     class Meta:
@@ -36,15 +36,21 @@ class SignupSerializer(serializers.ModelSerializer):
         
         return super().create(validated_data)    
 
+
 class VerifySerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()        
+
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
        
-       
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True,min_length=6)       
+    new_password = serializers.CharField(write_only=True,min_length=6)       
+    repeat_password = serializers.CharField(write_only=True,min_length=6)       
         
 
 class UserSerializer(serializers.ModelSerializer):

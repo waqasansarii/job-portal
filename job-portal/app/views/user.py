@@ -1,10 +1,8 @@
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password,check_password
 from django.contrib.auth import authenticate,login,logout
-from django.contrib.sites.shortcuts import get_current_site
-from django.urls import reverse
 
 from rest_framework.views import APIView
-from rest_framework.generics import CreateAPIView,ListAPIView,UpdateAPIView,ListCreateAPIView,RetrieveUpdateAPIView
+from rest_framework.generics import CreateAPIView,RetrieveUpdateAPIView
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -13,10 +11,11 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
-from django.core.mail import send_mail
-from django.conf import settings
 
-from ..serializer.user import SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,ProfileSerializer,UserProfileSerializer,UserSerializer,VerifySerializer
+from ..serializer.user import (
+SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,
+ProfileSerializer,UserSerializer,VerifySerializer,ChangePasswordSerializer
+)
 from ..models import User,Profile,ProfileJobSeeker
 from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
 from ..utils import generate_otp,verify_otp
@@ -38,33 +37,6 @@ class SignupView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
     
-    
-    
-class LoginView(APIView):
-    
-    @swagger_auto_schema( request_body=LoginSerializer)
-    def post(self,request:Request):
-        data = request.data
-        serializer = LoginSerializer(data=data)   
-        if serializer.is_valid():     
-            password = serializer.validated_data['password']
-            # password = make_password(serializer.validated_data['password'])
-            user = authenticate(request, email= serializer.validated_data['email'],password=password)
-            print(user,'user')
-            if user is not None:
-                login(request,user)
-                # refresh_token = RefreshToken.for_user(user)
-                return Response('login success',status.HTTP_200_OK)
-                # return Response({
-                #     "refresh_token":str(refresh_token),
-                #     "access_token": str(refresh_token.access_token),
-                #     "msg":"logged in successfully"
-                #     },status.HTTP_200_OK)
-            else:
-                return Response('Invalid credentials',status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors,status.HTTP_400_BAD_REQUEST) 
-        
 
 class VerifyOtpView(APIView):
     @swagger_auto_schema( request_body=VerifySerializer)
@@ -95,8 +67,72 @@ class VerifyOtpView(APIView):
         except Exception as e:
             return Response({'data':str(e)})
 
+
+class LoginView(APIView):
+    
+    @swagger_auto_schema( request_body=LoginSerializer)
+    def post(self,request:Request):
+        data = request.data
+        serializer = LoginSerializer(data=data)   
+        if serializer.is_valid():     
+            password = serializer.validated_data['password']
+            # password = make_password(serializer.validated_data['password'])
+            user = authenticate(request, email= serializer.validated_data['email'],password=password)
+            print(user,'user')
+            if user is not None:
+                login(request,user)
+                # refresh_token = RefreshToken.for_user(user)
+                return Response('login success',status.HTTP_200_OK)
+                # return Response({
+                #     "refresh_token":str(refresh_token),
+                #     "access_token": str(refresh_token.access_token),
+                #     "msg":"logged in successfully"
+                #     },status.HTTP_200_OK)
+            else:
+                return Response('Invalid credentials',status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors,status.HTTP_400_BAD_REQUEST) 
+
+
+class ChangePasswordView(APIView):
+    permission_classes=[IsAuthenticated]
+    @swagger_auto_schema(request_body=ChangePasswordSerializer)
+    def post(self,req:Request):
+        data = req.data
+        serializer = ChangePasswordSerializer(data=data)
+        if serializer.is_valid():
+            is_valid_password = check_password(
+                serializer.validated_data['current_password'],
+                req.user.password
+                )
+            
+            if is_valid_password:
+                new_password = serializer.validated_data['new_password']
+                repeat_password = serializer.validated_data['repeat_password']
+                
+                if new_password != repeat_password:
+                    return Response(
+                        {'error':'New password and confirm password should be same'},
+                        status.HTTP_400_BAD_REQUEST)
+                
+                try:
+                    new_password_hash = make_password(new_password)
+                    user = User.objects.get(id = req.user.id)
+                    user.password = new_password_hash
+                    user.save()
+                    return Response({'data':'Password has been changed'},status.HTTP_201_CREATED)
+                
+                except Exception as e:
+                    return Response({'error':str(e)},status.HTTP_400_BAD_REQUEST)
+                    
+            return Response('wrong password',status.HTTP_200_OK)
+        
+        else:
+            return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
+
         
 class LogoutView(APIView):
+    
     def post(self,req:Request):
         # user = req.user
         # data = UserSerializer(user)
