@@ -57,7 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
     # profile = serializers.PrimaryKeyRelatedField(queryset = Profile.objects.all(),source ='profile_user')
     class Meta:
         model = User
-        fields = ['id','role','email']
+        fields = ['id','role','email','is_verified']
         
  
         
