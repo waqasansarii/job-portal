@@ -1,6 +1,19 @@
 from rest_framework.permissions import BasePermission,SAFE_METHODS
 
 
+class IsVerified(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_verified
+
+class IsEmployeer(BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_authenticated:
+            if request.user.role == 1:
+               return True
+            return False
+        return False
+        # return super().has_permission(request, view)
+
 class IsEmployeerOrReadOnly(BasePermission):
     def has_permission(self, request, view):
         

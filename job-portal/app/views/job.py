@@ -13,7 +13,7 @@ from drf_yasg.utils import swagger_auto_schema
 import requests
 
 
-from ..permissions import IsEmployeerOrReadOnly,IsOwner,IsJobSeeker
+from ..permissions import IsEmployeerOrReadOnly,IsOwner,IsJobSeeker,IsVerified,IsEmployeer
 from ..serializer.job_serializer import JobSerializer,JobStatusSerializer
 from ..serializer.application_serializer import (
 ApplicationSerializer,ApplicationStatusSerializer,NotificationSerializer
@@ -25,7 +25,7 @@ from ..filters import JobFilters
 class JobView(ModelViewSet,PageNumberPagination):
     queryset = Jobs.objects.select_related('user__profile_user').all()
     serializer_class = JobSerializer
-    permission_classes = [IsOwner,IsEmployeerOrReadOnly]
+    permission_classes = [IsOwner,IsEmployeerOrReadOnly,IsVerified]
     page_size = 20  # Number of items per page
     page_size_query_param = 'page_size'  # Allow clients to set the page size
     max_page_size = 100  # Maximum page size allowed
@@ -38,27 +38,12 @@ class JobView(ModelViewSet,PageNumberPagination):
         methods=['GET'],
         url_path='my-jobs',
         url_name='my_jobs',
-        permission_classes=[IsAuthenticated]
+        permission_classes=[IsAuthenticated,IsVerified,IsEmployeer,IsOwner]
         )
     def my_jobs(self,request:Request):
-        
-        headers = {'x-api-key': 'CAAUXWY2gxx3sHYGMhPhJjt8jEaEH0Z5', 'Content-Type': 'application/json',           # Specify JSON content type
-        'Accept': 'application/json'}
-        response = requests.get('https://api.stb.gov.sg/content/attractions/v2/search?searchType=keyword&searchValues=singapore', headers=headers)
-        if response.status_code!=200:
-            print(response.text,response.status_code)
-        
-        try:
-            data = response.json()
-            print(data)
-        except ValueError:
-            print("Error: Unable to parse JSON - response content:", response.text)
-            return Response({'error': 'Failed to parse JSON from API response'}, status=500)    
-            
-        # print('running',response.json())
         query = self.queryset.filter(user= request.user.id).all()
         serializer = self.get_serializer(query,many=True)
-        return Response({'our':serializer.data,'api':data},status.HTTP_200_OK)
+        return Response(serializer.data,status.HTTP_200_OK)
     
     
     @action(
@@ -90,7 +75,7 @@ class JobView(ModelViewSet,PageNumberPagination):
         url_path='apply',
         methods=['PUT'],
         serializer_class=ApplicationSerializer,
-        permission_classes=[IsAuthenticated,IsJobSeeker]
+        permission_classes=[IsAuthenticated,IsJobSeeker,IsVerified]
         )
     def apply(self,req:Request,pk):
         try: 
@@ -165,7 +150,7 @@ class JobView(ModelViewSet,PageNumberPagination):
         detail=True,
         methods=['PUT'],
         url_path='applicants/(?P<applicant_id>[^/.]+)/status',
-        permission_classes=[IsAuthenticated,IsEmployeerOrReadOnly],
+        permission_classes=[IsAuthenticated,IsEmployeerOrReadOnly,IsVerified],
         serializer_class=ApplicationStatusSerializer,
         filterset_class=None
         # page_size=None
