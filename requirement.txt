@@ -4,5 +4,3 @@ drf-yasg
 django-filter
 django-otp 
 pyotp
-sendgrid
-django-environ
