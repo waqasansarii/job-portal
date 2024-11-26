@@ -126,38 +126,8 @@ class Notifications(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
         
         
-# class Task(models.Model):
-    
-#     Priority_choice = [
-#         ('Low','Low'),
-#         ('Medium','Medium'),
-#         ('High','High')
-#     ]
-    
-#     Status_Choice = [
-#         ('Open','Open'),
-#         ('In Progress','In Progress'),
-#         ('Done','Done')
-#     ]
-    
-#     title= models.CharField(max_length=200)
-#     description= models.TextField(null=True,blank=True)
-#     created_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='task_user')
-#     assignee = models.ForeignKey(User,on_delete=models.CASCADE,related_name='task_assigne',null=True,blank=True)
-#     project = models.ForeignKey(Project,on_delete=models.CASCADE,related_name='task_project')
-#     images = models.FileField(upload_to='tasks/',null=True,blank=True)
-#     priority = models.CharField(max_length=20,choices=Priority_choice,default='Low')
-#     status = models.CharField(max_length=20,choices=Status_Choice, default='Open')
-#     due_date = models.DateTimeField(null=True,blank=True)
-    
-#     def __str__(self):
-#         return self.title
-        
-        
-# class Comment(models.Model):
-#     content = models.TextField()
-#     created_by = models.ForeignKey(User,on_delete=models.CASCADE,related_name='comment_user')
-#     task = models.ForeignKey(Task,on_delete=models.CASCADE,related_name='comment_task')
-#     created_at = models.DateTimeField(auto_now_add=True)
-        
+class PasswordReset(models.Model):
+    email = models.EmailField()
+    token = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
     

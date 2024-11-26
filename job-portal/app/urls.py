@@ -2,7 +2,8 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from .views.user import (
     SignupView,LoginView,ProfileView,LogoutView,UserView,
-    JobSeekerProfileView,VerifyOtpView,ChangePasswordView
+    JobSeekerProfileView,VerifyOtpView,ChangePasswordView,
+    ForgotPasswordView,ResetPasswordView
     )
 from .views.job import JobView
 
@@ -14,6 +15,8 @@ urlpatterns = [
     path('users/verify',VerifyOtpView.as_view()),
     path('users/login',LoginView.as_view()),
     path('users/logout',LogoutView.as_view()),
+    path('users/forgot-password',ForgotPasswordView.as_view()),
+    path('users/reset/<token>',ResetPasswordView.as_view()),
     path('users/change-password',ChangePasswordView.as_view()),
     path('users',UserView.as_view()),
     path('employer/profile',ProfileView.as_view()),

@@ -98,3 +98,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields=['profile']        
         
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    # token = serializers.CharField(read_only=True)  
+    
+
+class ResetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(min_length=6) 
+    confirm_password = serializers.CharField()         
