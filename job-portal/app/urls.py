@@ -1,6 +1,6 @@
 from django.urls import path 
 from rest_framework.routers import DefaultRouter
-from .views.user import SignupView,LoginView,ProfileView,LogoutView,UserView,JobSeekerProfileView
+from .views.user import SignupView,LoginView,ProfileView,LogoutView,UserView,JobSeekerProfileView,VerifyOtpView
 from .views.job import JobView
 
 router = DefaultRouter()
@@ -8,6 +8,7 @@ router.register('jobs',JobView)
 
 urlpatterns = [
     path('users/signup',SignupView.as_view()),
+    path('users/verify',VerifyOtpView.as_view()),
     path('users/login',LoginView.as_view()),
     path('users/logout',LogoutView.as_view()),
     path('users',UserView.as_view()),

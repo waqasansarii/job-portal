@@ -20,11 +20,13 @@ class SignupSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['password'] = make_password(validated_data['password'])
         email_otp = generate_otp()
-        validated_data['email_otp'] = email_otp
+        print(email_otp)
+        validated_data['email_otp'] = email_otp['otp']
+        validated_data['totp'] = email_otp['totp']
         try :
             send_mail(
             'Account verification code',
-            f'Your OTP for email verification is: {email_otp}',
+            f'Your OTP for email verification is: {email_otp['otp']}',
             settings.EMAIL_HOST_USER,
             [validated_data['email']],
             fail_silently=False,
@@ -33,11 +35,15 @@ class SignupSerializer(serializers.ModelSerializer):
             return Response("Invalid header found.")    
         
         return super().create(validated_data)    
-        
+
+class VerifySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField()        
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+       
        
         
 
@@ -47,6 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id','role','email']
         
+ 
         
 class ProfileSerializer (serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
@@ -61,6 +68,7 @@ class ProfileSerializer (serializers.ModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = UserSerializer(instance.user).data  # Add `user` data in output only
         return representation   
+
 
 class ProfileJobSeekerSerializer (serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())

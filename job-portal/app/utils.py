@@ -26,8 +26,12 @@ import pyotp
 from datetime import datetime, timedelta
 
 def generate_otp():
-    totp = pyotp.TOTP(pyotp.random_base32(), interval=30)  # 30 seconds validity
-    return totp.now()
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret, interval=30)  # 30 seconds validity
+    return {'otp':totp.now(),'totp':secret}
 
-def verify_otp(otp, user_otp):
-    return otp == user_otp                
+def verify_otp(otp, user_otp,totp):
+    verify_totp=pyotp.TOTP(totp,interval=30)
+    verify = verify_totp.verify(user_otp)
+    print(verify,user_otp,totp,verify_totp.now(),otp)
+    return verify               

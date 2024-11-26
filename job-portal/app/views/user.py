@@ -16,7 +16,7 @@ from drf_yasg.utils import swagger_auto_schema
 from django.core.mail import send_mail
 from django.conf import settings
 
-from ..serializer.user import SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,ProfileSerializer,UserProfileSerializer,UserSerializer
+from ..serializer.user import SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,ProfileSerializer,UserProfileSerializer,UserSerializer,VerifySerializer
 from ..models import User,Profile,ProfileJobSeeker
 from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
 from ..utils import generate_otp,verify_otp
@@ -38,18 +38,6 @@ class SignupView(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = SignupSerializer
     
-    # def perform_create(self, serializer):
-    #     # current_site = get_current_site(self.request).domain
-    #     # reverse_link = reverse('verify-email')
-    #     # absurl = 
-    #     email_otp = generate_otp()
-    #     serializer.email_otp = email_otp
-    #     # mobile_otp = generate_otp()
-    #     # user.email_otp = email_otp
-    #     # user.mobile_otp = mobile_otp
-    #     serializer.save()
-
-    #     return  serializer
     
     
 class LoginView(APIView):
@@ -76,6 +64,37 @@ class LoginView(APIView):
                 return Response('Invalid credentials',status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors,status.HTTP_400_BAD_REQUEST) 
+        
+
+class VerifyOtpView(APIView):
+    @swagger_auto_schema( request_body=VerifySerializer)
+    def post(self,req:Request):
+        try:
+            serializer = VerifySerializer(data=req.data)
+            if serializer.is_valid():
+                try:
+                    user = User.objects.get(email=serializer.validated_data['email'])
+                    if user.is_verified:
+                        return Response({'success':'You are already verified'},status.HTTP_200_OK)
+                    if serializer.validated_data['otp'] != user.email_otp:
+                        return Response({'error':'given otp is wrong'},status.HTTP_200_OK)
+                    # print(user)
+                    verify = verify_otp(user.email_otp,serializer.validated_data['otp'],user.totp)
+                    if verify:
+                        user.is_verified = True
+                        user.save()
+                        return Response('your account has been verified',status.HTTP_201_CREATED)
+                    else:
+                        return Response({'error':'otp is expired'},status.HTTP_200_OK)
+                        
+                except User.DoesNotExist:
+                    return Response({'error':'Wrong email'},status.HTTP_200_OK) 
+            else:
+                return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)       
+            
+        except Exception as e:
+            return Response({'data':str(e)})
+
         
 class LogoutView(APIView):
     def post(self,req:Request):
