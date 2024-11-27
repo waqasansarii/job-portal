@@ -4,3 +4,4 @@ drf-yasg
 django-filter
 django-otp 
 pyotp
+cloudinary

@@ -12,6 +12,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 from ..serializer.user import (
 SignupSerializer,LoginSerializer,ProfileJobSeekerSerializer,
@@ -21,6 +23,7 @@ ForgotPasswordSerializer,ResetPasswordSerializer
 from ..models import User,Profile,ProfileJobSeeker,PasswordReset
 from ..permissions import IsEmployeerOrReadOnly,IsJobSeeker
 from ..utils import generate_otp,verify_otp,Util
+from ..cloudinary import CloudinaryImage
 
 
 # class SignupView(APIView):
@@ -206,6 +209,7 @@ class ProfileView (RetrieveUpdateAPIView):
     queryset = Profile.objects.select_related('user').all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated,IsEmployeerOrReadOnly]
+    parser_classes=[MultiPartParser, FormParser]
     def get_object(self):
         user = self.request.user
         try:
@@ -217,6 +221,7 @@ class ProfileView (RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         print(request.user)
         try:
+            
             profile = self.get_object()
             print('profile update function',profile)
             return super().update(request, *args, **kwargs)
@@ -224,9 +229,16 @@ class ProfileView (RetrieveUpdateAPIView):
             print('except section is running')
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
-                print('request user id',request.user.id)
-                serializer.save(email=request.user.email)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                try:
+                    print(serializer.validated_data)
+                    # logo_url = CloudinaryImage.upload_image(serializer.validated_data['logo'])
+                    # print('logo url',logo_url)
+                    # serializer.validated_data.pop('logo')
+                    serializer.save(email=request.user.email)
+                    print('request user id',request.user.id)
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                except Exception as e:
+                    return Response({'error':str(e)},status.HTTP_400_BAD_REQUEST)
             else:
                 return Response(serializer.errors,status.HTTP_400_BAD_REQUEST)
                     
@@ -235,6 +247,7 @@ class JobSeekerProfileView(RetrieveUpdateAPIView):
     queryset = ProfileJobSeeker.objects.all()
     serializer_class = ProfileJobSeekerSerializer  
     permission_classes = [IsAuthenticated,IsJobSeeker]
+    parser_classes=[MultiPartParser, FormParser]
     
     def get_object(self):
         try :

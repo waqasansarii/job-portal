@@ -7,6 +7,7 @@ from rest_framework.response import Response
 
 from ..models import User,Profile,ProfileJobSeeker
 from ..utils import generate_otp,verify_otp
+from ..cloudinary import CloudinaryImage
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -62,10 +63,30 @@ class UserSerializer(serializers.ModelSerializer):
         
 class ProfileSerializer (serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    email = serializers.EmailField(read_only=True)
     class Meta:
         model =  Profile
         fields =['first_name','last_name','email','gender','dob','company_name'
                  ,'company_size','country','city','logo','user','created_at']
+    
+    def update(self, instance, validated_data):
+        print(validated_data)
+        if 'logo' in validated_data and validated_data['logo'] is not None:
+            logo_url = CloudinaryImage.upload_image(validated_data['logo'], f"profile_{instance.user.id}_logo")
+            print('Uploaded logo URL:', logo_url)
+            validated_data['logo'] = logo_url['result']['secure_url']
+        return super().update(instance, validated_data)
+        
+        # if 'logo' == None in validated_data:
+        #     return super().update(instance, validated_data)    
+            
+        # if 'logo' != None in validated_data:
+        #     logo_url = CloudinaryImage.upload_image(validated_data['logo'])
+        #     validated_data.pop('logo')
+        #     print('logo url',logo_url)
+        #     validated_data['logo'] = logo_url['result']['secure_url']
+        #     return validated_data
+        # # return super().update(instance, validated_data)    
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
