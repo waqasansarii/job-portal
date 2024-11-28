@@ -5,3 +5,4 @@ django-filter
 django-otp 
 pyotp
 cloudinary
+python-dotenv

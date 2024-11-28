@@ -70,42 +70,55 @@ class ProfileSerializer (serializers.ModelSerializer):
                  ,'company_size','country','city','logo','user','created_at']
     
     def update(self, instance, validated_data):
-        print(validated_data)
+
         if 'logo' in validated_data and validated_data['logo'] is not None:
-            logo_url = CloudinaryImage.upload_image(validated_data['logo'], f"profile_{instance.user.id}_logo")
-            print('Uploaded logo URL:', logo_url)
+            logo_url = CloudinaryImage.upload_file(validated_data['logo'], f"logo_{instance.user.id}")
             validated_data['logo'] = logo_url['result']['secure_url']
-        return super().update(instance, validated_data)
-        
-        # if 'logo' == None in validated_data:
-        #     return super().update(instance, validated_data)    
             
-        # if 'logo' != None in validated_data:
-        #     logo_url = CloudinaryImage.upload_image(validated_data['logo'])
-        #     validated_data.pop('logo')
-        #     print('logo url',logo_url)
-        #     validated_data['logo'] = logo_url['result']['secure_url']
-        #     return validated_data
-        # # return super().update(instance, validated_data)    
+        return super().update(instance, validated_data)
+            
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data  
+        representation['user'] = UserSerializer(instance.user).data 
+        logo_url = representation.get('logo').replace('http://127.0.0.1:8000/https%3A/', 'https://')
+        representation['logo'] = logo_url
         return representation   
 
 
 class ProfileJobSeekerSerializer (serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    email = serializers.EmailField(read_only=True)
     class Meta:
         model =  ProfileJobSeeker
         fields =['first_name','last_name','gender','dob','qualification'
-                 ,'cv','country','city','profile_image','user','created_at']
+                 ,'cv','country','city','profile_image','user','email','created_at']
     
 
+    def update(self, instance, validated_data):
+
+        if 'profile_image' in validated_data and validated_data['profile_image'] is not None:
+            logo_url = CloudinaryImage.upload_file(validated_data['profile_image'], f"profile_{instance.user.id}_image")
+            validated_data['profile_image'] = logo_url['result']['secure_url']
+        
+        if 'cv' in validated_data and validated_data['cv'] is not None:
+            logo_url = CloudinaryImage.upload_file(validated_data['cv'], f"cv_{instance.user.id}")
+            validated_data['cv'] = logo_url['result']['secure_url']    
+        print('validated data',validated_data)    
+        return super().update(instance, validated_data)
+            
+    
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['user'] = UserSerializer(instance.user).data  
-        return representation   
+        representation['user'] = UserSerializer(instance.user).data 
+        if 'profile_image' in representation and representation['profile_image'] is not None:
+            logo_url = representation.get('profile_image').replace('http://127.0.0.1:8000/https%3A/', 'https://')
+            representation['profile_image'] = logo_url
+            
+        if 'cv' in representation and representation['cv'] is not None:
+            cv_url = representation.get('cv').replace('http://127.0.0.1:8000/https%3A/', 'https://')
+            representation['cv'] = cv_url
+        return representation    
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
