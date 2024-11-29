@@ -221,21 +221,19 @@ class ProfileView (RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         print(request.user)
         try:
-            
             profile = self.get_object()
-            print('profile update function',profile)
             return super().update(request, *args, **kwargs)
+        
         except NotFound:
-            print('except section is running')
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
                 try:
-                    print(serializer.validated_data)
-                    # logo_url = CloudinaryImage.upload_image(serializer.validated_data['logo'])
-                    # print('logo url',logo_url)
-                    # serializer.validated_data.pop('logo')
+                    logo = serializer.validated_data['logo']
+                    if 'logo' in serializer.validated_data and logo is not None:
+                        logo_url = CloudinaryImage.upload_file(logo, f"logo_{request.user.id}")
+                        serializer.validated_data['logo'] = logo_url['result']['secure_url']
+        
                     serializer.save(email=request.user.email)
-                    print('request user id',request.user.id)
                     return Response(serializer.data, status=status.HTTP_201_CREATED)
                 except Exception as e:
                     return Response({'error':str(e)},status.HTTP_400_BAD_REQUEST)
@@ -261,10 +259,22 @@ class JobSeekerProfileView(RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         try:
             profile = self.get_object()
+            # print('profile try',profile)
             return super().update(request, *args, **kwargs)
         except NotFound:
+            # print('profile except')
+            
             serializer = self.get_serializer(data=request.data)
             if serializer.is_valid():
+                profile_img = serializer.validated_data['profile_image']
+                cv = serializer.validated_data['cv']
+                if 'profile_image' in serializer.validated_data and profile_img is not None:
+                    logo_url = CloudinaryImage.upload_file(profile_img, f"profile_{request.user.id}_image")
+                    serializer.validated_data['profile_image'] = logo_url['result']['secure_url']
+        
+                if 'cv' in serializer.validated_data and cv is not None:
+                    cv_url = CloudinaryImage.upload_file(cv, f"cv_{request.user.id}")
+                    serializer.validated_data['cv'] = cv_url['result']['secure_url']  
                 serializer.save(email=request.user.email)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             else:
