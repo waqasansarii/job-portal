@@ -230,7 +230,7 @@ class ProfileView (RetrieveUpdateAPIView):
                 try:
                     logo = serializer.validated_data['logo']
                     if 'logo' in serializer.validated_data and logo is not None:
-                        logo_url = CloudinaryImage.upload_file(logo, f"logo_{request.user.id}")
+                        logo_url = CloudinaryImage.upload_file(logo, f"logo_{request.user.id}",'image')
                         serializer.validated_data['logo'] = logo_url['result']['secure_url']
         
                     serializer.save(email=request.user.email)
@@ -269,11 +269,11 @@ class JobSeekerProfileView(RetrieveUpdateAPIView):
                 profile_img = serializer.validated_data['profile_image']
                 cv = serializer.validated_data['cv']
                 if 'profile_image' in serializer.validated_data and profile_img is not None:
-                    logo_url = CloudinaryImage.upload_file(profile_img, f"profile_{request.user.id}_image")
+                    logo_url = CloudinaryImage.upload_file(profile_img, f"profile_{request.user.id}_image",'image')
                     serializer.validated_data['profile_image'] = logo_url['result']['secure_url']
         
                 if 'cv' in serializer.validated_data and cv is not None:
-                    cv_url = CloudinaryImage.upload_file(cv, f"cv_{request.user.id}")
+                    cv_url = CloudinaryImage.upload_file(cv, f"cv_{request.user.id}",'raw')
                     serializer.validated_data['cv'] = cv_url['result']['secure_url']  
                 serializer.save(email=request.user.email)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -72,7 +72,7 @@ class ProfileSerializer (serializers.ModelSerializer):
     def update(self, instance, validated_data):
 
         if 'logo' in validated_data and validated_data['logo'] is not None:
-            logo_url = CloudinaryImage.upload_file(validated_data['logo'], f"logo_{instance.user.id}")
+            logo_url = CloudinaryImage.upload_file(validated_data['logo'], f"logo_{instance.user.id}",'image')
             validated_data['logo'] = logo_url['result']['secure_url']
             
         return super().update(instance, validated_data)
@@ -99,11 +99,11 @@ class ProfileJobSeekerSerializer (serializers.ModelSerializer):
         # print('serializer update')
 
         if 'profile_image' in validated_data and validated_data['profile_image'] is not None:
-            logo_url = CloudinaryImage.upload_file(validated_data['profile_image'], f"profile_{instance.user.id}_image")
+            logo_url = CloudinaryImage.upload_file(validated_data['profile_image'], f"profile_{instance.user.id}_image",'image')
             validated_data['profile_image'] = logo_url['result']['secure_url']
         
         if 'cv' in validated_data and validated_data['cv'] is not None:
-            cv_url = CloudinaryImage.upload_file(validated_data['cv'], f"cv_{instance.user.id}")
+            cv_url = CloudinaryImage.upload_file(validated_data['cv'], f"cv_{instance.user.id}",'raw')
             validated_data['cv'] = cv_url['result']['secure_url']    
         # print('validated data',validated_data)    
         # print('serializer update',validated_data)

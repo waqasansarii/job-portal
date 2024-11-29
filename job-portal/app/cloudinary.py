@@ -18,10 +18,20 @@ cloudinary.config(
 # Upload an image
 class CloudinaryImage:
     @staticmethod
-    def upload_file(obj,id):
+    def upload_file(obj,id,resource_type):
         # upload_result = cloudinary.uploader.upload("https://res.cloudinary.com/demo/image/upload/getting-started/shoes.jpg",
         #                                    public_id="shoes")        
-        upload_result = cloudinary.uploader.upload(obj,public_id=id)
+        upload_result = cloudinary.uploader.upload(
+            obj,
+            public_id=id, 
+            responsive_breakpoints = { 
+                "create_derived": True, 
+                "bytes_step": 20000, 
+                "min_width": 200, 
+                "max_width": 1000 
+                },
+            resource_type=resource_type
+            )
         print(upload_result["secure_url"])
 
         # Optimize delivery by resizing and applying auto-format and auto-quality
