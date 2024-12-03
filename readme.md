@@ -154,6 +154,7 @@ Run the following commands to configure the application:
 
 ### Apply Migrations
 ```bash
+python manage.py makemigrations
 python manage.py migrate
 ```
 
@@ -198,7 +199,6 @@ cloudinary.config(
 - **`cloudinary`**: Media file storage
 - **`python-dotenv`**: Environment variable management
 
-paste the above libraries in the requirement.txt file.
 
 ---
 
